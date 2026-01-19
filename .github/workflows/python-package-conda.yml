@@ -1,34 +1,47 @@
-name: Python Package using Conda
+name: Daily Flight Data Scan
 
-on: [push]
+on:
+  schedule:
+    # 每天北京时间上午 9:00 运行 (UTC 01:00)
+    - cron: '0 1 * * *'
+  push:
+    branches: [ "master", "main" ] # 当你手动推送代码时也会触发一次，方便测试
+  workflow_dispatch: # 允许你在 GitHub 页面手动点击按钮运行
 
 jobs:
-  build-linux:
+  build:
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 5
 
     steps:
+    # 1. 拉取仓库代码
     - uses: actions/checkout@v4
+
+    # 2. 安装 Python (使用 pip 比 conda 更快)
     - name: Set up Python 3.10
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: '3.10'
-    - name: Add conda to system path
-      run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        echo $CONDA/bin >> $GITHUB_PATH
+
+    # 3. 安装项目依赖
     - name: Install dependencies
       run: |
-        conda env update --file environment.yml --name base
-    - name: Lint with flake8
+        python -m pip install --upgrade pip
+        pip install pandas amadeus python-dotenv
+
+    # 4. 运行你的核心采集脚本
+    # 注意：这里要确保你的文件名叫 daily_scanner_cn.py
+    - name: Run flight scanner
+      env:
+        AMADEUS_CLIENT_ID: ${{ secrets.AMADEUS_CLIENT_ID }}
+        AMADEUS_CLIENT_SECRET: ${{ secrets.AMADEUS_CLIENT_SECRET }}
+      run: python daily_scanner_cn.py
+
+    # 5. 核心：将更新后的 CSV 文件存回 GitHub
+    - name: Commit and Push Changes
       run: |
-        conda install flake8
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
-      run: |
-        conda install pytest
-        pytest
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add *.csv
+        # 如果没有新数据（文件没变），就不提交，防止报错
+        git commit -m "自动更新机票数据: $(date +'%Y-%m-%d')" || echo "No changes to commit"
+        git push
