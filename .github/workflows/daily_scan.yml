@@ -1,46 +1,42 @@
-name: Daily Flight Data Collection
+name: Flight Data Daily Collection
 
-# 1. 设置触发时间
 on:
+  push:
+    branches: [ "main" ] 
   schedule:
-    # 每天北京时间早上 9:00 运行 (UTC 时间 01:00)
-    - cron: '0 1 * * *'
-  workflow_dispatch: # 允许你手动在 GitHub 网页点击按钮立即运行
+    - cron: '0 1 * * *'  # 每天北京时间 09:00
+  workflow_dispatch:      
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    # 2. 拉取你的代码
-    - name: Checkout code
-      uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-    # 3. 安装 Python 环境
-    - name: Set up Python
+    - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.10'
 
-    # 4. 安装依赖库
+    # 利用你的 requirements.txt 安装依赖
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-    # 5. 运行采集脚本
-    # 重点：这里通过 env 把 GitHub 的 Secrets 传递给代码
-    - name: Run scanner
+    - name: Run flight collector
       env:
         AMADEUS_CLIENT_ID: ${{ secrets.AMADEUS_CLIENT_ID }}
         AMADEUS_CLIENT_SECRET: ${{ secrets.AMADEUS_CLIENT_SECRET }}
-      run: python daily_scanner_cn.py
+      run: python 1_collector.py
 
-    # 6. 将新采集的数据提交回 GitHub 仓库
     - name: Commit and push changes
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git add *.csv
+        # 即使没有新数据，也不要让工作流报错停止
         git commit -m "Auto-update flight data: $(date +'%Y-%m-%d')" || exit 0
         git push
