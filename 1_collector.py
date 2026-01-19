@@ -1,15 +1,25 @@
-import pandas as pd
-from amadeus import Client, ResponseError
-from datetime import datetime, timedelta
 import os
-import time
-import re
-from dotenv import load_dotenv
+import sys
 
 # --- 1. 初始化配置 ---
-load_dotenv()
-API_KEY = os.getenv('AMADEUS_CLIENT_ID')
-API_SECRET = os.getenv('AMADEUS_CLIENT_SECRET')
+# 优先从环境变量读取 (GitHub Actions 会注入)
+API_KEY = os.environ.get('AMADEUS_CLIENT_ID')
+API_SECRET = os.environ.get('AMADEUS_CLIENT_SECRET')
+
+# 如果环境变量拿不到，再尝试加载本地 .env (用于你本地电脑运行)
+if not API_KEY or not API_SECRET:
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+        API_KEY = os.getenv('AMADEUS_CLIENT_ID')
+        API_SECRET = os.getenv('AMADEUS_CLIENT_SECRET')
+    except ImportError:
+        pass
+
+# 核心：如果还是没有密钥，直接报错退出，不要让它卡住
+if not API_KEY or not API_SECRET:
+    print("❌ 错误：未找到 API 密钥。请检查 GitHub Secrets 或本地 .env 文件。")
+    sys.exit(1)
 
 ORIGIN = 'SZX'        
 DESTINATION = 'YIH'   
