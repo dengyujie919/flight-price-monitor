@@ -1,4 +1,10 @@
+import pandas as pd
+from amadeus import Client, ResponseError  # <--- 关键就在这一行！
+from datetime import datetime, timedelta
 import os
+import time
+import re
+from dotenv import load_dotenv
 import sys
 
 # --- 1. 初始化配置 ---
