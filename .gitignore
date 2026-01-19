@@ -2,7 +2,7 @@
 .env
 
 # 忽略采集到的 CSV 数据文件
-*.csv
+#*.csv
 
 # 忽略 Python 缓存和日志
 __pycache__/
