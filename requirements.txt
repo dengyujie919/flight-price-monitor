@@ -1,0 +1,3 @@
+pandas
+amadeus
+python-dotenv
