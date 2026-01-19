@@ -34,7 +34,7 @@ jobs:
       env:
         AMADEUS_CLIENT_ID: ${{ secrets.AMADEUS_CLIENT_ID }}
         AMADEUS_CLIENT_SECRET: ${{ secrets.AMADEUS_CLIENT_SECRET }}
-      run: python daily_scanner_cn.py
+      run: python daily_scanner.py
 
     # 5. 核心：将更新后的 CSV 文件存回 GitHub
     - name: Commit and Push Changes
