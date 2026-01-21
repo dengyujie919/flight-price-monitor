@@ -108,13 +108,21 @@ def run_daily_scan():
         
         time.sleep(0.2) # 稍微缩短间隔
 
-    # 保存逻辑
+   # --- 保存逻辑 ---
     if buffer_data:
         final_df = pd.concat(buffer_data, ignore_index=True)
-        final_df.to_csv(FILE_NAME, index=False, encoding='utf-8-sig')
-        log(f"🎉 成功！数据已更新至 {FILE_NAME}")
+        
+        # 检查文件是否已经存在
+        file_exists = os.path.isfile(FILE_NAME)
+        
+        if not file_exists:
+            # 如果文件不存在，创建新文件，包含表头
+            final_df.to_csv(FILE_NAME, index=False, encoding='utf-8-sig')
+            log(f"✨ 首次运行，已创建新文件: {FILE_NAME}")
+        else:
+            # 如果文件已存在，使用 mode='a' (append) 追加数据
+            # header=False 表示不重复写入表头
+            final_df.to_csv(FILE_NAME, mode='a', index=False, header=False, encoding='utf-8-sig')
+            log(f"💾 数据已追加至现有文件: {FILE_NAME}")
     else:
-        log("⚠️ 完成，但未发现可用航班数据。")
-
-if __name__ == "__main__":
-    run_daily_scan()
+        log("⚠️ 本次未采集到数据，文件未更新。")
