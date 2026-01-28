@@ -1,0 +1,55 @@
+name: Flight Data Daily Collection
+
+on:
+  push:
+    branches: [ "main" ] 
+  schedule:
+    - cron: '0 1 * * *'  # 每天北京时间 09:00
+  workflow_dispatch:      
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    # 利用你的 requirements.txt 安装依赖
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Run flight collector
+      env:
+        AMADEUS_CLIENT_ID: ${{ secrets.AMADEUS_CLIENT_ID }}
+        AMADEUS_CLIENT_SECRET: ${{ secrets.AMADEUS_CLIENT_SECRET }}
+      run: python 1_collector.py
+      
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+
+        # 先添加新生成的 CSV 文件
+        git add *.csv
+
+        # 检查是否有变化需要提交
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          # 先拉取远程最新代码（使用 --strategy-option=theirs 处理冲突）
+          git pull origin main --no-rebase --strategy-option=theirs
+
+          # 提交数据文件
+          git commit -m "Auto-update flight data: $(date +'%Y-%m-%d %H:%M:%S')"
+
+          # 推送到远程
+          git push
+        fi

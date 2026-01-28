@@ -1,0 +1,14 @@
+# 忽略 API 密钥文件
+.env
+
+# 忽略采集到的 CSV 数据文件
+#*.csv
+
+# 忽略 Python 缓存和日志
+__pycache__/
+*.log
+run_log.txt
+
+# 忽略虚拟环境
+venv/
+.vscode/
