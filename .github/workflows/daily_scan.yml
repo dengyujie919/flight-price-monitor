@@ -1,55 +1,115 @@
-name: Flight Data Daily Collection
+name: Flight Data Auto Collection
 
 on:
   push:
-    branches: [ "main" ] 
+    branches: [ "main" ]
   schedule:
-    - cron: '0 1 * * *'  # 每天北京时间 09:00
-  workflow_dispatch:      
+    # 每天2次采集：北京时间 08:00 和 20:00
+    # UTC时间: 00:00 和 12:00
+    - cron: '0 0,12 * * *'
+  workflow_dispatch:  # 允许手动触发
 
 jobs:
-  build:
+  collect-flight-data:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Set up Python 3.10
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
+        cache: 'pip'
 
-    # 利用你的 requirements.txt 安装依赖
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install -r requirements.txt
 
-    - name: Run flight collector
+    - name: Create data directory
+      run: |
+        mkdir -p data/raw
+        mkdir -p data/processed
+        mkdir -p logs
+
+    - name: Run flight data collector
       env:
         AMADEUS_CLIENT_ID: ${{ secrets.AMADEUS_CLIENT_ID }}
         AMADEUS_CLIENT_SECRET: ${{ secrets.AMADEUS_CLIENT_SECRET }}
-      run: python 1_collector.py
-      
-    - name: Commit and push changes
+      run: |
+        echo "开始采集航班数据..."
+        cd src/collectors
+        python 1_collector.py
+
+    - name: Check data collection result
+      run: |
+        echo "检查采集结果..."
+        if [ -f data/raw/szx_yih_flight_data_cn.csv ]; then
+          echo "✅ 数据文件存在"
+          echo "数据行数:"
+          wc -l data/raw/szx_yih_flight_data_cn.csv
+          echo "文件大小:"
+          du -h data/raw/szx_yih_flight_data_cn.csv
+          echo "最新数据预览:"
+          tail -n 5 data/raw/szx_yih_flight_data_cn.csv
+        else
+          echo "❌ 数据文件不存在"
+          exit 1
+        fi
+
+    - name: Commit and push data to GitHub
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
 
-        # 先添加新生成的 CSV 文件
-        git add *.csv
+        # 添加数据文件
+        git add data/raw/szx_yih_flight_data_cn.csv
+        git add data/processed/flight_data_featured.csv 2>/dev/null || true
 
-        # 检查是否有变化需要提交
+        # 检查是否有变化
         if git diff --staged --quiet; then
-          echo "No changes to commit"
+          echo "ℹ️ 没有新的数据需要提交"
         else
-          # 先拉取远程最新代码（使用 --strategy-option=theirs 处理冲突）
+          echo "📊 发现新数据，准备提交..."
+
+          # 先拉取远程最新代码
           git pull origin main --no-rebase --strategy-option=theirs
 
-          # 提交数据文件
-          git commit -m "Auto-update flight data: $(date +'%Y-%m-%d %H:%M:%S')"
+          # 显示即将提交的文件
+          echo "即将提交的文件:"
+          git diff --staged --name-only
+
+          # 提交数据
+          git commit -m "📊 Auto-update flight data: $(date +'%Y-%m-%d %H:%M:%S')
+
+          📡 采集时间: $(date +'%Y-%m-%d %H:%M:%S UTC')
+          🔄 Trigger: GitHub Actions
+
+          Co-Authored-By: GitHub Actions <github-actions[bot]@users.noreply.github.com>"
 
           # 推送到远程
           git push
+
+          echo "✅ 数据已成功推送到GitHub"
         fi
+
+    - name: Upload collection log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: collection-log-$(date +'%Y%m%d-%H%M%S')
+        path: |
+          data/raw/szx_yih_flight_data_cn.csv
+          logs/system.log
+        retention-days: 30
+
+    - name: Summary
+      if: always()
+      run: |
+        echo "## 📊 采集任务完成" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **执行时间**: $(date +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+        echo "- **状态**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **数据文件**: data/raw/szx_yih_flight_data_cn.csv" >> $GITHUB_STEP_SUMMARY

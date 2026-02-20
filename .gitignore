@@ -1,9 +1,10 @@
 # 环境变量
 .env
 
-# 数据文件
-data/**/*.csv
-*.csv
+# 数据文件（允许提交原始数据到GitHub）
+# data/raw/*.csv     ← 允许提交
+# models/*.pkl       ← 忽略模型文件
+# outputs/**/*       ← 忽略输出文件
 
 # 模型文件
 models/**/*.pkl
