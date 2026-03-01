@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import platform
+import os
 
 # --- 1. 配置中文字体 (最关键的一步) ---
 # 否则图表上的中文会变成方框
@@ -16,7 +17,9 @@ else:
 plt.rcParams['axes.unicode_minus'] = False # 解决负号显示问题
 
 # --- 2. 读取数据 ---
-FILE_NAME = 'szx_yih_flight_data_cn.csv' # 确保文件名和你生成的一致
+# 使用绝对路径定位数据文件
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+FILE_NAME = os.path.join(PROJECT_ROOT, 'data', 'raw', 'szx_yih_flight_data_cn.csv')
 
 try:
     df = pd.read_csv(FILE_NAME)

@@ -1,6 +1,11 @@
 # 环境变量
 .env
 
+# 虚拟环境
+venv/
+env/
+ENV/
+
 # 数据文件（允许提交原始数据到GitHub）
 # data/raw/*.csv     ← 允许提交
 # models/*.pkl       ← 忽略模型文件
