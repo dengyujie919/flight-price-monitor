@@ -11,43 +11,47 @@
 ## 📁 项目结构
 
 ```
-predict/
+flight-price-monitor/
+├── .github/workflows/             # GitHub Actions 自动化
+│   └── daily_scan.yml            # 每日数据采集任务
+│
 ├── data/                          # 数据目录
-│   ├── raw/                       # 原始数据
+│   ├── raw/                       # 原始采集数据
 │   │   └── szx_yih_flight_data_cn.csv
-│   └── processed/                 # 处理后的数据
+│   └── processed/                 # 特征工程数据
 │       └── flight_data_featured.csv
 │
-├── models/                        # 模型文件
+├── models/                        # 训练模型存储
 │   └── flight_price_model.pkl
 │
-├── outputs/                       # 输出结果
-│   ├── figures/                   # 图表
+├── outputs/                       # 分析输出
+│   ├── figures/                   # 可视化图表
 │   │   └── prediction_results.png
-│   └── reports/                   # 分析报告
+│   └── reports/                   # 统计报告
 │       ├── analysis_report.txt
 │       ├── price_analysis.png
 │       ├── time_analysis.png
 │       ├── correlation_heatmap.png
 │       └── comprehensive_analysis.png
 │
-├── src/                           # 源代码
-│   ├── collectors/                # 数据采集
-│   │   └── 1_collector.py
-│   ├── analyzers/                 # 数据分析
-│   │   └── flight_data_analysis.py
-│   ├── predictors/                # 预测模型
-│   │   ├── 2_predictor.py
-│   │   └── 3_advisor.py
+├── src/                           # 核心代码
+│   ├── collectors/                # 数据采集模块
+│   │   └── 1_collector.py        # Amadeus API 采集器
+│   ├── analyzers/                 # 数据分析模块
+│   │   └── flight_data_analysis.py  # 特征工程
+│   ├── predictors/                # 预测模块
+│   │   ├── 2_predictor.py        # 随机森林模型
+│   │   └── 3_advisor.py          # 购买建议生成器
 │   └── utils/                     # 工具函数
-│       └── visualize_trend.py
+│       └── visualize_trend.py    # 价格趋势可视化
 │
-├── docs/                          # 文档
-├── config.py                      # 配置文件
-├── run.py                         # 主运行脚本 ⭐
-├── requirements.txt               # 依赖包
-├── .env                           # 环境变量
-└── README.md                      # 项目说明
+├── config.py                      # 全局配置
+├── run.py                         # 统一入口脚本
+├── scheduler.py                   # 自动调度器
+├── requirements.txt               # Python 依赖
+├── .env                           # API 密钥配置
+├── .gitignore                     # Git 忽略规则
+└── README.md                      # 项目文档
 ```
 
 ## 🛠️ 功能特性
