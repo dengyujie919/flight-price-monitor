@@ -20,7 +20,10 @@ if not API_KEY or not API_SECRET:
 ORIGIN = 'SZX'        
 DESTINATION = 'YIH'   
 SCAN_DAYS = 30        
-FILE_NAME = 'szx_yih_flight_data_cn.csv'
+# 使用绝对路径确保数据写入正确位置
+# collector 在 src/collectors/ 目录下，需要向上两级到项目根目录
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+FILE_NAME = os.path.join(PROJECT_ROOT, 'data', 'raw', 'szx_yih_flight_data_cn.csv')
 
 # --- 2. 辅助工具函数 ---
 
